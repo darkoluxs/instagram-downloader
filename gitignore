@@ -1,0 +1,9 @@
+descargas/
+gallery-dl/
+
+*.mp4
+*.webm
+*.mkv
+
+__pycache__/
+*.pyc
