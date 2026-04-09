@@ -13,9 +13,12 @@ def limpiar_url(url: str) -> str:
 def ejecutar(comando):
     print("\n🛠 Ejecutando:", " ".join(comando))
     
-    resultado = subprocess.run(comando, text=True)
-
-    return resultado.returncode == 0
+    try:
+        resultado = subprocess.run(comando, text=True)
+        return resultado.returncode == 0
+    except Exception as e:
+        print("Error ejecutando comando:", e)
+        return False
 
 
 def descargar_con_yt_dlp(url, carpeta):
@@ -24,11 +27,24 @@ def descargar_con_yt_dlp(url, carpeta):
     comando = [
         "python", "-m", "yt_dlp",
         "--cookies-from-browser", "firefox",
+
+        # compatibilidad TikTok
+        "--user-agent", "Mozilla/5.0",
+        "--referer", "https://www.tiktok.com/",
+
         "--no-playlist",
         "--no-warnings",
-        "-f", "bv*+ba/b",
+        "--retries", "3",
+
+        # 📹 Formato más compatible
+        "-f", "mp4/bv*+ba/b",
+
         "--merge-output-format", "mp4",
-        "-o", f"{carpeta}/%(uploader)s/%(title)s.%(ext)s",
+
+        # 🧹 Evitar nombres raros
+        "--restrict-filenames",
+
+        "-o", f"{carpeta}/%(uploader)s/%(title).80s.%(ext)s",
         url
     ]
 
@@ -51,14 +67,20 @@ def descargar(url):
     url = limpiar_url(url)
     carpeta = preparar_carpeta()
 
-    print("📂 Guardando en:", carpeta)
+    print("Guardando en:", carpeta)
 
-    if "instagram.com" in url or "tiktok.com" in url:
+    if "tiktok.com" in url:
+        print("Detectado TikTok")
         descargar_con_yt_dlp(url, carpeta)
+
+    elif "instagram.com" in url:
+        print("Detectado Instagram")
+        descargar_con_yt_dlp(url, carpeta)
+
     else:
         print("URL no soportada")
 
 
 if __name__ == "__main__":
-    url = input("Coloca la URL del reel: ")
+    url = input("Coloca la URL del video: ")
     descargar(url)
